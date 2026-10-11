@@ -23,11 +23,11 @@ await boss.createQueue(JOBS.syncMasterData);
 await boss.work(JOBS.intakeRun, { batchSize: 1 }, async (jobs) => {
   for (const job of jobs) {
     console.log(`[intake] run ${JSON.stringify(job.data)}`);
-    await handleIntakeJob({ db, root, objects, llm, globalPause }, job.data);
+    await handleIntakeJob({ root, objects, llm, globalPause }, job.data);
   }
 });
 await boss.work(JOBS.syncMasterData, { batchSize: 1 }, async (jobs) => {
-  for (const job of jobs) await handleSyncJob({ db, root }, job.data);
+  for (const job of jobs) await handleSyncJob({ root }, job.data);
 });
 
 console.log("worker started");

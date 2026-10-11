@@ -12,6 +12,13 @@ if (!url) {
   process.exit(2);
 }
 const { sql, close } = createPostgresDb(url);
-const ran = await runMigrations(postgresExecutor(sql));
-console.log(ran.length ? `applied: ${ran.join(", ")}` : "up to date");
-await close();
+// The runner issues BEGIN/COMMIT as separate statements, so every statement must use the
+// same connection. A pooled client would spread them across connections.
+const conn = await sql.reserve();
+try {
+  const ran = await runMigrations(postgresExecutor(conn));
+  console.log(ran.length ? `applied: ${ran.join(", ")}` : "up to date");
+} finally {
+  conn.release();
+  await close();
+}

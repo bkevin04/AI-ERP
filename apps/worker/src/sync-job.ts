@@ -4,7 +4,7 @@ import { DryRunConnector, syncMasterData, type ErpConnector, type MasterDataSink
 import type { ExtCustomer, ExtPriceList, ExtProduct, ExtStock } from "@ai-erp/contracts";
 import { normalizeSku, normalizeText } from "@ai-erp/core";
 import { schema, type Db, type PgCoreStore } from "@ai-erp/db";
-import { and, eq, sql } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 
 export const SyncJob = z.object({ tenantId: z.uuid(), connectorId: z.uuid() });
 
@@ -82,15 +82,14 @@ export function connectorFromConfig(kind: string, config: Record<string, unknown
   return new DryRunConnector();
 }
 
-export async function handleSyncJob(deps: { db: Db; root: PgCoreStore }, raw: unknown) {
+export async function handleSyncJob(deps: { root: PgCoreStore }, raw: unknown) {
   const job = SyncJob.parse(raw);
   const store = deps.root.forTenant(job.tenantId);
-  return store.transaction(job.tenantId, async () => {
-    const rows = await deps.db.select().from(schema.connectors).where(eq(schema.connectors.id, job.connectorId)).limit(1);
+  return store.withTenantDb(async (db) => {
+    const rows = await db.select().from(schema.connectors).where(eq(schema.connectors.id, job.connectorId)).limit(1);
     const connector = rows[0];
     if (!connector) throw new Error(`connector ${job.connectorId} not found`);
-    const report = await syncMasterData(connectorFromConfig(connector.kind, connector.config), new PgMasterDataSink(deps.db, job.tenantId, job.connectorId));
-    await deps.db.execute(sql`SELECT 1`);
+    const report = await syncMasterData(connectorFromConfig(connector.kind, connector.config), new PgMasterDataSink(db, job.tenantId, job.connectorId));
     console.log(`[sync] ${connector.kind} ${JSON.stringify(report)}`);
     return report;
   });

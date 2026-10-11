@@ -4,7 +4,6 @@ import type { PgCoreStore } from "@ai-erp/db";
 import { prepareDocument, type ObjectStore } from "@ai-erp/platform";
 import { schema } from "@ai-erp/db";
 import { eq } from "drizzle-orm";
-import type { Db } from "@ai-erp/db";
 
 export const IntakeJob = z.object({
   tenantId: z.uuid(),
@@ -16,7 +15,6 @@ export const IntakeJob = z.object({
 export type IntakeJob = z.infer<typeof IntakeJob>;
 
 export interface IntakeJobDeps {
-  db: Db;
   root: PgCoreStore;
   objects: ObjectStore;
   llm: LlmPort;
@@ -38,9 +36,9 @@ export async function handleIntakeJob(deps: IntakeJobDeps, raw: unknown): Promis
   if (!principal) throw new Error(`intake agent ${agentId} not found`);
 
   const documents: PreparedDocument[] = [];
-  await store.transaction(job.tenantId, async () => {
+  await store.withTenantDb(async (db) => {
     for (const id of job.documentIds) {
-      const rows = await deps.db.select().from(schema.documents).where(eq(schema.documents.id, id)).limit(1);
+      const rows = await db.select().from(schema.documents).where(eq(schema.documents.id, id)).limit(1);
       const d = rows[0];
       if (!d) continue;
       const obj = await deps.objects.get(d.storageKey);

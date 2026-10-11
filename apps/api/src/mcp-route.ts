@@ -1,5 +1,6 @@
 import type { Hono } from "hono";
 import type { HttpBindings } from "@hono/node-server";
+import { RESPONSE_ALREADY_SENT } from "@hono/node-server/utils/response";
 import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
 import { createMcpServer } from "@ai-erp/mcp";
 import { ToolError, sha256 } from "@ai-erp/core";
@@ -27,11 +28,9 @@ export function mountMcp(app: Hono<{ Bindings: HttpBindings }>, deps: ApiDeps): 
     const body = c.req.method === "POST" ? await c.req.json().catch(() => undefined) : undefined;
     await transport.handleRequest(c.env.incoming, c.env.outgoing, body);
     c.env.outgoing.on("close", () => { void transport.close(); void server.close(); });
+    // The transport wrote the raw response; this sentinel tells the node adapter not to write again.
     return RESPONSE_ALREADY_SENT;
   });
 }
-
-// Hono's node adapter recognises this sentinel when the raw response was written directly.
-const RESPONSE_ALREADY_SENT = new Response(null, { status: 200 });
 
 export { ToolError };

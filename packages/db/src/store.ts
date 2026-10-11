@@ -1,4 +1,4 @@
-import { and, desc, eq, inArray, sql } from "drizzle-orm";
+import { and, desc, eq, gte, inArray, sql } from "drizzle-orm";
 import type {
   CoreStore, CustomerSummary, NewAgentRun, NewDocument, NewEvent, NewProposal, NewProvenanceEntry, NewRunStep,
   PriceResolution, PrincipalContext, ProductSummary, StoredRunStep, TenantInfo,
@@ -51,6 +51,15 @@ export class PgCoreStore implements CoreStore {
   private q<T>(fn: (db: Db) => Promise<T>): Promise<T> {
     if (this.inTx) return fn(this.db);
     return this.transaction(this.tid(), (tx) => fn((tx as PgCoreStore).db));
+  }
+
+  /**
+   * Run `fn` with this tenant's RLS-scoped db handle, for queries the CoreStore contract does not
+   * cover. Use this instead of a pooled `Db`: outside the tenant transaction, `app.tenant_id` is
+   * unset and row-level security hides every row.
+   */
+  withTenantDb<T>(fn: (db: Db) => Promise<T>): Promise<T> {
+    return this.q(fn);
   }
 
   // ---- identity ---------------------------------------------------------------
@@ -113,7 +122,7 @@ export class PgCoreStore implements CoreStore {
     await this.q((db) => db.insert(s.toolInvocations).values({ id: rec.id, tenantId: this.tid(), principalId: rec.principalId, tool: rec.tool, at: rec.at }));
   }
   async countInvocationsSince(principalId: string, since: Date): Promise<number> {
-    const rows = await this.q((db) => db.select({ n: sql<number>`count(*)::int` }).from(s.toolInvocations).where(and(eq(s.toolInvocations.principalId, principalId), sql`${s.toolInvocations.at} >= ${since}`)));
+    const rows = await this.q((db) => db.select({ n: sql<number>`count(*)::int` }).from(s.toolInvocations).where(and(eq(s.toolInvocations.principalId, principalId), gte(s.toolInvocations.at, since))));
     return rows[0]?.n ?? 0;
   }
   async getIdempotentResult(principalId: string, tool: string, key: string) {
