@@ -1,0 +1,56 @@
+# Local stack: app Postgres, MinIO (S3), Odoo 17 Community as the dev-time customer ERP, Mailpit.
+# Start: pnpm infra:up   Stop: pnpm infra:down
+services:
+  postgres:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: app
+    ports: ["5432:5432"]
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./postgres/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      retries: 10
+
+  minio:
+    image: minio/minio:latest
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: minio
+      MINIO_ROOT_PASSWORD: minio12345
+    ports: ["9000:9000", "9001:9001"]
+    volumes: ["miniodata:/data"]
+
+  odoo-db:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: odoo
+      POSTGRES_PASSWORD: odoo
+      POSTGRES_DB: postgres
+    volumes: ["odoodb:/var/lib/postgresql/data"]
+
+  odoo:
+    image: odoo:17
+    depends_on: [odoo-db]
+    environment:
+      HOST: odoo-db
+      USER: odoo
+      PASSWORD: odoo
+    ports: ["8069:8069"]
+    volumes: ["odoodata:/var/lib/odoo"]
+    # First boot installs Sales + Inventory + Contacts into database "odoo" (admin / admin).
+    command: ["odoo", "-d", "odoo", "-i", "sale_management,stock,contacts", "--without-demo=all", "--load-language=en_US"]
+
+  mailpit:
+    image: axllent/mailpit:latest
+    ports: ["8025:8025", "1025:1025"]
+
+volumes:
+  pgdata:
+  miniodata:
+  odoodb:
+  odoodata:

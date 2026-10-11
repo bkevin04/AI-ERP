@@ -1,0 +1,26 @@
+{
+  "name": "@ai-erp/db",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./testing": "./src/testing.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json",
+    "test": "vitest run",
+    "migrate": "tsx src/cli.ts migrate",
+    "seed-dev": "tsx src/seed-dev.ts"
+  },
+  "dependencies": {
+    "@ai-erp/contracts": "workspace:*",
+    "@ai-erp/core": "workspace:*",
+    "drizzle-orm": "^0.45.0",
+    "postgres": "^3.4.0",
+    "zod": "^4.1.0"
+  },
+  "devDependencies": {
+    "@electric-sql/pglite": "^0.5.0"
+  }
+}

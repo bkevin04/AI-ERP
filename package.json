@@ -1,0 +1,29 @@
+{
+  "name": "ai-erp",
+  "private": true,
+  "version": "0.1.0",
+  "description": "AI-native operations system for small product businesses: agents do the data entry, humans review and teach, everything is audited.",
+  "packageManager": "pnpm@10.28.0",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "typecheck": "turbo run typecheck",
+    "test": "turbo run test",
+    "build": "turbo run build",
+    "dev:api": "pnpm --filter @ai-erp/api dev",
+    "dev:worker": "pnpm --filter @ai-erp/worker dev",
+    "db:migrate": "pnpm --filter @ai-erp/db migrate",
+    "odoo:seed": "pnpm --filter @ai-erp/infra seed",
+    "infra:up": "docker compose -f infra/docker-compose.yml up -d",
+    "infra:down": "docker compose -f infra/docker-compose.yml down",
+    "db:seed-dev": "pnpm --filter @ai-erp/db seed-dev"
+  },
+  "devDependencies": {
+    "@types/node": "^22.19.0",
+    "tsx": "^4.23.0",
+    "turbo": "^2.11.0",
+    "typescript": "~5.9.0",
+    "vitest": "^5.0.0"
+  }
+}

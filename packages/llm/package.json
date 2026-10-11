@@ -1,0 +1,17 @@
+{
+  "name": "@ai-erp/llm",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": { ".": "./src/index.ts" },
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@ai-erp/contracts": "workspace:*",
+    "@ai-erp/core": "workspace:*",
+    "@anthropic-ai/sdk": "^0.133.0",
+    "zod": "^4.1.0"
+  }
+}

@@ -1,0 +1,9 @@
+{
+  "name": "@ai-erp/platform",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": { ".": "./src/index.ts" },
+  "scripts": { "typecheck": "tsc -p tsconfig.json", "test": "vitest run" },
+  "dependencies": { "@ai-erp/contracts": "workspace:*", "@ai-erp/core": "workspace:*", "xlsx": "^0.18.5" }
+}

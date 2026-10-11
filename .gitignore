@@ -1,0 +1,11 @@
+node_modules/
+dist/
+.turbo/
+*.tsbuildinfo
+.env
+.env.*
+!.env.example
+infra/odoo/out/
+coverage/
+.DS_Store
+.data/
